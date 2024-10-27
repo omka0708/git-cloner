@@ -37,8 +37,8 @@ def main() -> list[AnyComponent]:
                 ),
                 c.Div(
                     components=[
-                        c.Heading(text='Parse repositories', level=3),
-                        c.Button(text='Parse', on_click=PageEvent(name='parse-repos-open')),
+                        c.Heading(text='Parse & clone repositories', level=3),
+                        c.Button(text='Parse & clone', on_click=PageEvent(name='parse-repos-open')),
                         c.Modal(
                             title='GitHub username',
                             body=[
@@ -145,8 +145,12 @@ async def parse_repos(form: Annotated[UserNameForm, fastui_form(UserNameForm)]) 
 
 @app.get('/clone/{author}/{repo}')
 async def clone(author: str, repo: str):
+    r = aioredis.Redis(host='git-cloner-redis', port=6379, db=0, decode_responses=True)
+    await r.set(f'repo:{repo}', value='cloning')
+
     from tasks import generate_report_task
     generate_report_task.delay(author, repo)
+
     return RedirectResponse('/')
 
 
