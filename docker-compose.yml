@@ -1,0 +1,30 @@
+version: '3.1'
+
+services:
+
+  app:
+    build:
+      context: app
+    container_name: git-cloner-app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./repos:/repos
+    ports:
+      - "8000:8000"
+
+  redis:
+    image: redis
+    container_name: git-cloner-redis
+    ports:
+      - "6379:6379"
+
+  celery:
+    build:
+      context: app
+    container_name: git-cloner-celery
+    command: sh -c "celery --app=tasks worker --loglevel=info --pool=solo"
+    volumes:
+      - ./repos:/repos
+    depends_on:
+      - redis
+
